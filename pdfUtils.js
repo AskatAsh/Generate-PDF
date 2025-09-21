@@ -21,7 +21,7 @@ export async function generatePDF(html) {
         const page = await browser.newPage();
 
         console.log("⏳ Setting HTML content...");
-        await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 10000 }); // 10s timeout
+        await page.setContent(html, { waitUntil: 'networkidle0', timeout: 10000 }); // 10s timeout
 
         console.log("🖨 Generating PDF...");
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
