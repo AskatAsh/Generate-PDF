@@ -5,20 +5,18 @@ export async function generatePDF(html) {
     let browser;
     try {
         console.log("🚀 Launching Chromium...");
-        const executablePath = await chromium.executablePath()
-        browser = await puppeteer.launch({
-            executablePath,
+        const executablePath =
+            (await chromium.executablePath()) ||
+            puppeteer.executablePath(); // fallback for local dev
+
+        const browser = await puppeteer.launch({
             args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath,
             headless: chromium.headless,
-            defaultViewport: chromium.defaultViewport
-        })
-        // browser = await puppeteer.launch({
-        //   args: chromium.args,
-        //   defaultViewport: chromium.defaultViewport,
-        //   executablePath: await chromium.executablePath(),
-        //   headless: chromium.headless,
-        //   ignoreHTTPSErrors: true,
-        // });
+            ignoreHTTPSErrors: true,
+        });
+
 
         const page = await browser.newPage();
 
