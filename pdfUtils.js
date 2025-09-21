@@ -8,8 +8,7 @@ export async function generatePDF(html) {
         const executablePath = await chromium.executablePath()
         browser = await puppeteer.launch({
             executablePath,
-            // args: chromium.args,
-            args: puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
+            args: chromium.args,
             headless: chromium.headless,
             defaultViewport: chromium.defaultViewport
         })
