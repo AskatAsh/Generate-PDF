@@ -4,18 +4,18 @@ let concurrent = 0;
 const MAX_CONCURRENT = 5; // adjust concurrency limit
 
 // List of allowed origins (you can customize)
-const ALLOWED_ORIGINS = ['*']; // allow all for testing
+// Universal CORS headers
+const setCorsHeaders = (res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // allow all origins for testing
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+};
 
 export default async function handler(req, res) {
     // -------------------------------
     // Handle CORS preflight request
     // -------------------------------
-    const origin = req.headers.origin || '';
-    if (ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin === '' ? '*' : origin);
-        res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    }
+    setCorsHeaders(res);
 
     if (req.method === 'OPTIONS') {
         // CORS preflight
