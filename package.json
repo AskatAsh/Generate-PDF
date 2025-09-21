@@ -12,7 +12,7 @@
   "type": "module",
   "description": "",
   "dependencies": {
-    "@sparticuz/chromium": "^109.0.5",
+    "@sparticuz/chromium": "^138.0.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "p-queue": "^8.1.1",
