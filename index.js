@@ -11,6 +11,10 @@ const MAX_CONCURRENT = 5;
 
 app.options('/generate-pdf', (req, res) => res.sendStatus(204));
 
+app.get('/', (req, res) => {
+    res.status(200).json({message: "PDF Generator is running..."})
+})
+
 app.post('/generate-pdf', async (req, res) => {
   const { html } = req.body;
   if (!html) return res.status(400).json({ error: 'HTML content is required' });
