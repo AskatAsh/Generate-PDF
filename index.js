@@ -1,56 +1,84 @@
 import { generatePDF } from './pdfUtils.js';
 
 let concurrent = 0;
-const MAX_CONCURRENT = 5; // adjust concurrency limit
-
-// List of allowed origins (you can customize)
-// Universal CORS headers
-const setCorsHeaders = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // allow all origins for testing
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-};
+const MAX_CONCURRENT = 5;
 
 export default async function handler(req, res) {
-    // -------------------------------
-    // Handle CORS preflight request
-    // -------------------------------
-    setCorsHeaders(res);
+  const origin = req.headers.origin || '*';
 
-    if (req.method === 'OPTIONS') {
-        // CORS preflight
-        return res.status(204).end();
-    }
-    // -------------------------------
-    // Handle GET request (root domain)
-    // -------------------------------
-    if (req.method === 'GET') {
-        return res.json({ message: 'PDF generation server is running. Use POST /generate-pdf to generate PDFs.' });
-    }
+  // Universal CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
 
-    // -------------------------------
-    // Only POST is allowed for PDF generation
-    // -------------------------------
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed. Use POST for PDF generation.' });
-    }
+  // ---- Handle OPTIONS preflight ----
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
 
-    const { html } = req.body;
-    if (!html) return res.status(400).json({ error: 'HTML content is required' });
+  // ---- Handle GET request (root) ----
+  if (req.method === 'GET') {
+    return new Response(
+      JSON.stringify({ message: 'PDF server is running. Use POST /generate-pdf.' }),
+      { status: 200, headers: corsHeaders }
+    );
+  }
 
-    if (concurrent >= MAX_CONCURRENT) {
-        return res.status(429).json({ error: 'Server busy. Try again later.' });
-    }
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: corsHeaders,
+    });
+  }
 
-    concurrent++;
-    try {
-        const pdfBuffer = await generatePDF(html);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.send(pdfBuffer);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'PDF generation failed', details: err.message });
-    } finally {
-        concurrent--;
-    }
+  // ---- Parse JSON body ----
+  let body;
+  try {
+    body = await req.json();
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
+
+  const { html } = body;
+  if (!html) {
+    return new Response(JSON.stringify({ error: 'HTML content is required' }), {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
+
+  if (concurrent >= MAX_CONCURRENT) {
+    return new Response(JSON.stringify({ error: 'Server busy. Try again later.' }), {
+      status: 429,
+      headers: corsHeaders,
+    });
+  }
+
+  concurrent++;
+  try {
+    const pdfBuffer = await generatePDF(html);
+
+    return new Response(pdfBuffer, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/pdf',
+      },
+    });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: 'PDF generation failed', details: err.message }),
+      { status: 500, headers: corsHeaders }
+    );
+  } finally {
+    concurrent--;
+  }
 }
